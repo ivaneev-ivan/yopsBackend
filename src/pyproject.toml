@@ -11,6 +11,7 @@ djangorestframework = "^3.15.1"
 djoser = "^2.2.2"
 django = "^5.0.3"
 gunicorn = "^21.2.0"
+psycopg2-binary = "^2.9.9"
 
 
 [build-system]
