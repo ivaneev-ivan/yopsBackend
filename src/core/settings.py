@@ -30,9 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # ---
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     # ---
-    'users.apps.UsersConfig'
+    'users.apps.UsersConfig',
+    'orders.apps.OrdersConfig'
 ]
 
 MIDDLEWARE = [
