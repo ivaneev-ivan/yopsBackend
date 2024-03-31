@@ -39,7 +39,6 @@ services:
       - 3000
     depends_on:
       - web
-
 volumes:
   postgres_data:
   static_volume:
