@@ -33,6 +33,13 @@ services:
       - POSTGRES_USER=django_user
       - POSTGRES_PASSWORD=django_password
       - POSTGRES_DB=django_db
+  frontend:
+    build: ./frontend
+    expose:
+      - 3000
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
   static_volume:
