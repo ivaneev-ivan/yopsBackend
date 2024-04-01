@@ -39,6 +39,8 @@ services:
       - 3000
     depends_on:
       - web
+    volumes:
+      - ./frontend/:/usr/app/
 volumes:
   postgres_data:
   static_volume:
