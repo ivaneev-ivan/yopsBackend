@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from yookassa import Configuration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,9 +40,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -117,5 +118,17 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
 }
+CORS_ORIGIN_ALLOW_ALL = True
+CSRF_TRUSTED_ORIGINS = ['https://yops-dev.ru', 'http://localhost:3000', 'https://localhost']
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
 
-CSRF_TRUSTED_ORIGINS = ['https://yops-dev.ru']
+Configuration.account_id = os.environ.get("YUKASSA_LOGIN", '')
+Configuration.secret_key = os.environ.get("YUKASSA_PASSWORD", '')
+REDIS_HOST = 'redis'
+REDIS_PORT = '6379'
+CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
+CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+TIMEWEB_TOKEN = os.environ.get("TOKEN_TIMEWEB", "")
+REDIRECT_URL=os.environ.get('REDIRECT_URL', '')

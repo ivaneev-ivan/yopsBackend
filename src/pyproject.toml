@@ -13,6 +13,8 @@ django = "^5.0.3"
 gunicorn = "^21.2.0"
 psycopg2-binary = "^2.9.9"
 django-cors-headers = "^4.3.1"
+yookassa = "^3.0.1"
+celery = {extras = ["redis"], version = "^5.3.6"}
 
 
 [build-system]
