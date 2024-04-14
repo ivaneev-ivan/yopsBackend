@@ -1,0 +1,45 @@
+#!/bin/bash
+detect_distr() {
+	if grep -qs "ubuntu" /etc/os-release; then
+		OS="ubuntu"
+		OS_VER=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')
+	elif [[ -e /etc/debian_version ]]; then
+		OS="debian"
+		OS_VER=$(grep -oE '[0-9]+' /etc/debian_version | head -1)
+	elif [[ -e /etc/almalinux-release || -e /etc/rocky-release || -e /etc/centos-release ]]; then
+		OS="centos"
+		OS_VER=$(grep -shoE '[0-9]+' /etc/almalinux-release /etc/rocky-release /etc/centos-release | head -1)
+	elif [[ -e /etc/fedora-release ]]; then
+		OS="fedora"
+		OS_VER=$(grep -oE '[0-9]+' /etc/fedora-release | head -1)
+	else
+		return 1
+	fi
+    return 0
+}
+install_docker() {
+    if [[ "$OS" == "ubuntu" ]] || [[ "$OS" == "debian" ]]; then
+	    apt-get update -y && apt-get install -y ca-certificates curl gnupg
+	    install -m 0755 -d /etc/apt/keyrings
+	    if [[ ! -f /etc/apt/keyrings/docker.gpg ]]; then
+            install -m 0755 -d /etc/apt/keyrings
+		    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+		    chmod a+r /etc/apt/keyrings/docker.gpg
+	    fi
+        echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/"$OS" "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  	    tee /etc/apt/sources.list.d/docker.list > /dev/null
+        apt-get update -y && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    elif [[ "$OS" == "centos" ]]; then
+	    yum remove -y docker docker-client docker-client-latest docker-common docker-latest  docker-latest docker-logrotate docker-engine
+	    yum install -y yum-utils
+	    yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	    yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+	fi
+	systemctl daemon-reload
+	systemctl enable --now docker.socket docker.service
+}
+if ! detect_distr; then
+    echo "ERROR: Supported distros are Ubuntu, Debian, CentOS." >&2
+    exit 1
+fi
+install_docker

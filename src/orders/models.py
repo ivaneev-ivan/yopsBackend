@@ -81,3 +81,60 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
 
+class OrderOutline(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    apiUrl = models.TextField('Ссылка на api')
+    certSha256 = models.TextField('Токен доступа к manager')
+    update_time = models.DateTimeField('Дата обновления', auto_now=True)
+    create_time = models.DateTimeField('Дата создания', auto_now_add=True)
+
+    class Meta:
+        db_table = 'order_outlines'
+
+def user_directory(instance, filename):
+    # return f'user_{instance.user.public_id}/{filename}'
+    return f'user_{instance.order.user}/{filename}'
+
+
+def user_directory_image(instance, filename):
+    # return f'qr_{instance.order.public_id}/{filename}'
+    return f'qr_{instance.order.user}/{filename}'
+
+
+class Config(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+    )
+    config = models.FileField(
+        upload_to=user_directory
+    )
+    qr_code = models.ImageField(upload_to=user_directory_image)
+    key = models.CharField(
+        max_length=255
+    )
+    uploaded_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.uploaded_on.date()}'
+
+    class Meta:
+        db_table = 'configs'
+
+
+class ConfigKey(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE
+    )
+    name = models.CharField(max_length=150)
+    password = models.CharField(max_length=100)
+    port = models.PositiveIntegerField()
+    method = models.CharField(max_length=50)
+    accessUrl = models.TextField()
+
+    def __str__(self):
+        return f"Order {self.order} {self.accessUrl[:5]}"
+
+    class Meta:
+        db_table = "configs_key"
