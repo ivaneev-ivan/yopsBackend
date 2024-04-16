@@ -91,37 +91,6 @@ class OrderOutline(models.Model):
     class Meta:
         db_table = 'order_outlines'
 
-def user_directory(instance, filename):
-    # return f'user_{instance.user.public_id}/{filename}'
-    return f'user_{instance.order.user}/{filename}'
-
-
-def user_directory_image(instance, filename):
-    # return f'qr_{instance.order.public_id}/{filename}'
-    return f'qr_{instance.order.user}/{filename}'
-
-
-class Config(models.Model):
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.CASCADE,
-    )
-    config = models.FileField(
-        upload_to=user_directory
-    )
-    qr_code = models.ImageField(upload_to=user_directory_image)
-    key = models.CharField(
-        max_length=255
-    )
-    uploaded_on = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'{self.uploaded_on.date()}'
-
-    class Meta:
-        db_table = 'configs'
-
-
 class ConfigKey(models.Model):
     order = models.ForeignKey(
         Order,

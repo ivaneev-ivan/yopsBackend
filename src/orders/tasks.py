@@ -1,6 +1,7 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from yookassa import Payment
+from django.conf import settings
 
 from .models import Order
 
@@ -13,7 +14,6 @@ from celery.utils.log import get_task_logger
 from orders.deployment_services import VPNDeployment, RemoteCmdExecutor
 from orders.models import Order, OrderOutline, ConfigKey
 import requests
-from django.conf import settings
 from yookassa import Payment
 
 logger = get_task_logger(__name__)
@@ -29,6 +29,7 @@ class PaymentIsLow(Exception):
 
 @shared_task(autoretry_for=(OrderTitleIsNotAllowed, PaymentIsLow), retry_kwargs={'max_retries': 7, 'countdown': 60})
 def create_server_for_order(order_id: int):
+		logger.info("Create server for order")
 		order = Order.objects.get(pk=order_id)
 		server_location = order.location.title
 		url = "https://api.timeweb.cloud/api/v1/servers"
@@ -46,7 +47,7 @@ def create_server_for_order(order_id: int):
 		}
 		headers = {
 				'Content-Type': 'application/json',
-				'Authorization': f'Bearer {os.environ.get("TOKEN_TIMEWEB", "")}'
+				'Authorization': f'Bearer {settings.TIMEWEB_TOKEN}'
 		}
 		if "RUSSIA".lower() in server_location:
 				payload["configuration"]["configurator_id"] = 11
@@ -129,4 +130,4 @@ def check_payments():
 							order.payment.is_paid = True
 							order.save()
 							order.payment.save()
-							create_server_for_order.
+							create_server_for_order.apply_async((order.pk,))

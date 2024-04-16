@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ServerLocation, Order, Payment
+from .models import ServerLocation, Order, Payment, ConfigKey, OrderOutline
 
 
 @admin.register(ServerLocation)
@@ -15,3 +15,11 @@ class OrderModelAdmin(admin.ModelAdmin):
 @admin.register(Payment)
 class PaymentModelAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_paid', 'payment_url', 'price')
+
+@admin.register(ConfigKey)
+class ConfigKeyModelAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(OrderOutline)
+class OrderOutlineModelAdmin(admin.ModelAdmin):
+    pass
