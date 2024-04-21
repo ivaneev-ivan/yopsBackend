@@ -1,13 +1,15 @@
 import json
 from rest_framework import serializers
-from .models import ServerLocation, Order
+from .models import ServerLocation, Order, ConfigKey
 from .models import Payment as PaymentModel
 from yookassa import Payment
 from django.conf import settings
 
+
 class OrderSerializer(serializers.ModelSerializer):
-    payment_url = serializers.CharField(source='payment.payment_url',read_only=True)
+    payment_url = serializers.CharField(source='payment.payment_url', read_only=True)
     is_payed = serializers.BooleanField(source='payment.is_paid', read_only=True)
+
     def create(self, validated_data):
         order = Order.objects.create(
             user=validated_data['user'],
@@ -47,3 +49,9 @@ class ServerLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServerLocation
         fields = '__all__'
+
+
+class ConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfigKey
+        fields = ('order', 'name', 'password', 'port', 'method', 'accessUrl')

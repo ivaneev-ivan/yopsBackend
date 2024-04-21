@@ -89,30 +89,23 @@ class VPNDeployment:
             return stdout.read()
 
     def deploy(self, script_path: str) -> bool:
-        _, stdout, stderr = self.__remote_cmd_exec.execute_bash_script(script_path, f"-n {self.__client_count}")
-        try:
-            with open('order/stdout.txt', 'w', encoding='utf-8') as file:
-                file.writelines(stdout.readlines())
-            with open('order/stderr.txt', 'w', encoding='utf-8') as file:
-                file.writelines(stdout.readlines())
-        except:
-            pass
+        _, stdout, stderr = self.__remote_cmd_exec.execute_bash_script(script_path, '')
+        stdout, stderr = stdout.readlines(), stderr.readlines()
         return True
 
     def deploy_outline(self, script_path: str) -> Outline:
         _, stdout, stderr = self.__remote_cmd_exec.execute_bash_script(script_path, f"--api-port 8000 --keys-port 8001")
         stdout, stderr = stdout.readlines(), stderr.readlines()
-        with open('order/stdout.txt', 'w', encoding='utf-8') as file:
+        with open('./stdout.txt', 'w', encoding='utf-8') as file:
             file.writelines(stdout)
-        with open('order/stderr.txt', 'w', encoding='utf-8') as file:
+        with open('./stderr.txt', 'w', encoding='utf-8') as file:
             file.writelines(stdout)
         data = dict()
         for line in stdout:
             string = re.search(r'{"apiUrl":"https:.+","certSha256":".+"}', line)
             if string is not None:
                 data = json.loads(string.group())
-            _, stdout, stderr = self.__remote_cmd_exec.execute_cmd("systemctl disable firewalld --now")
-            print(stdout.readlines())
+        _, stdout, stderr = self.__remote_cmd_exec.execute_cmd("systemctl disable firewalld --now")
         return Outline(data.get("apiUrl", None), data)
 
 

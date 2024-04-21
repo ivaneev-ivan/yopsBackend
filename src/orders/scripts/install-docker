@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 detect_distr() {
 	if grep -qs "ubuntu" /etc/os-release; then
 		OS="ubuntu"
