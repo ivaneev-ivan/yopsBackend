@@ -64,7 +64,6 @@ def create_server_for_order(order_id: int):
         payload["configuration"]["configurator_id"] = 23
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
-    print(response.status_code, response.text)
     if response.status_code == 200 or response.status_code == 201:
         logger.error(f'Order #{order.id} is created')
         data = response.json()
@@ -97,17 +96,20 @@ def create_server_for_order(order_id: int):
                 time.sleep(30)
         if not vpn.deploy("orders/scripts/install-docker"):
             raise Exception("Error: Installation has failed!")
-        outline = vpn.deploy_outline("orders/scripts/outline-install-helper")
-        print(outline)
-        OrderOutline.objects.create(order=order, apiUrl=outline.json_string['apiUrl'],
-                                    certSha256=outline.json_string['certSha256'])
-        logger.info("Outline created")
-        for i in range(1, order.count_configs + 1):
-            logger.info(f"start creating config count {i}")
-            response = requests.post(f"{outline.api_root}/access-keys/", verify=False)
-            data = response.json()
-            ConfigKey.objects.create(name=data['name'], password=data['password'], order=order, port=data['port'],
-                                     method=data['method'], accessUrl=data['accessUrl'])
+        if "vpn" in order.services:
+            outline = vpn.deploy_outline("orders/scripts/outline-install-helper")
+            OrderOutline.objects.create(order=order, apiUrl=outline.json_string['apiUrl'],
+                                        certSha256=outline.json_string['certSha256'])
+            logger.info("Outline created")
+            for i in range(1, order.count_configs + 1):
+                logger.info(f"start creating config count {i}")
+                response = requests.post(f"{outline.api_root}/access-keys/", verify=False)
+                data = response.json()
+                ConfigKey.objects.create(name=data['name'], password=data['password'], order=order, port=data['port'],
+                                        method=data['method'], accessUrl=data['accessUrl'])
+        if "files" in order.services:
+            vpn.deploy("orders/scripts/install-nextcloud")
+            logger.info("nextcloud created")
         order.status = 'done'
         order.save()
     else:

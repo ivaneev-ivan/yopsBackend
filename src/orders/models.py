@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from django.conf import settings
 
@@ -66,9 +67,13 @@ class Order(models.Model):
         null=True,
         blank=True
     )
-
+    services = models.CharField(max_length=100, default='["vpn"]')
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
+    def set_services(self, services):
+        self.services = json.dumps(services)
+    def get_services(self):
+        return json.loads(self.services)
     def save(self, *args, **kwargs):
         if self.is_own_server:
             self.solar = self.location.solar + self.count_configs * 25
