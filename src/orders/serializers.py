@@ -42,7 +42,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
-        read_only_fields = ('solar', 'user')
+        read_only_fields = ('solar', 'user', 'uuid_id')
 
 
 class ServerLocationSerializer(serializers.ModelSerializer):
@@ -54,4 +54,4 @@ class ServerLocationSerializer(serializers.ModelSerializer):
 class ConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfigKey
-        fields = ('order', 'name', 'password', 'port', 'method', 'accessUrl')
+        fields = ('id', 'order', 'name', 'password', 'port', 'method', 'accessUrl')

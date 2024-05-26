@@ -1,3 +1,4 @@
+import uuid
 import json
 from django.db import models
 from django.conf import settings
@@ -54,6 +55,7 @@ class Order(models.Model):
         ('working', 'В обработке'),
         ('done', 'Выполнен'),
     ]
+    uuid_id = models.CharField(default=uuid.uuid4, max_length=255, unique=True)
     count_configs = models.PositiveSmallIntegerField('Количество конфигов')
     is_own_server = models.BooleanField('Создавать новый сервер')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
