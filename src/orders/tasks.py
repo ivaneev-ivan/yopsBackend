@@ -29,7 +29,7 @@ class PaymentIsLow(Exception):
 
 @shared_task(autoretry_for=(OrderTitleIsNotAllowed, PaymentIsLow), retry_kwargs={'max_retries': 7, 'countdown': 60})
 def create_server_for_order(order_id: int):
-    logger.info("Create server for order")
+    print("Create server for order")
     order = Order.objects.get(pk=order_id)
     server_location = order.location.title.lower()
     url = "https://api.timeweb.cloud/api/v1/servers"
@@ -58,16 +58,16 @@ def create_server_for_order(order_id: int):
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200 or response.status_code == 201:
-        logger.info(f'Order #{order.id} is created')
+        print(f'Order #{order.id} is created')
         data = response.json()
         server_id = data['server']['id']
 
         while data['server']['status'] != "on":
-            logger.info('Сервер не запущен')
+            print('Сервер не запущен')
             time.sleep(10)
             response = requests.get(f'https://api.timeweb.cloud/api/v1/servers/{server_id}', headers=headers)
-            logger.info(response)
-            logger.info(response.text)
+            print(response)
+            print(response.text)
             data = response.json()
 
         root_pass = data['server']['root_pass']
@@ -84,23 +84,23 @@ def create_server_for_order(order_id: int):
             'availability_zone': location
         }))
         ip = response.json()['ip']['ip']
-        logger.info(f'Создал ip {ip}')
+        print(f'Создал ip {ip}')
         response.post(f'https://api.timeweb.cloud/api/v1/servers/{server_id}/ips', headers=headers,
                       data=json.dumps({
                           "type": "ipv4",
                           "ptr": ip
                       }))
-        logger.info('Добавил ip')
+        print('Добавил ip')
         data['server']['status'] = 'sleep'
         while data['server']['status'] != "on":
             time.sleep(10)
             response = requests.get(f'https://api.timeweb.cloud/api/v1/servers/{server_id}', headers=headers)
-            logger.info(response)
-            logger.info3(response.text)
+            print(response)
+            print(response.text)
             data = response.json()
         time.sleep(30)
         work = True
-        logger.info(f'Start connect to {ip} with password {root_pass}')
+        print(f'Start connect to {ip} with password {root_pass}')
         while work:
             try:
                 vpn = VPNDeployment(RemoteCmdExecutor(host=ip, password=root_pass), client_count=order.count_configs)
@@ -114,16 +114,16 @@ def create_server_for_order(order_id: int):
             outline = vpn.deploy_outline("orders/scripts/outline-install-helper")
             OrderOutline.objects.create(order=order, apiUrl=outline.json_string['apiUrl'],
                                         certSha256=outline.json_string['certSha256'])
-            logger.info("Outline created")
+            print("Outline created")
             for i in range(1, order.count_configs + 1):
-                logger.info(f"start creating config count {i}")
+                print(f"start creating config count {i}")
                 response = requests.post(f"{outline.api_root}/access-keys/", verify=False)
                 data = response.json()
                 ConfigKey.objects.create(name=data['name'], password=data['password'], order=order, port=data['port'],
                                          method=data['method'], accessUrl=data['accessUrl'])
         if "files" in order.services:
             vpn.deploy("orders/scripts/install-nextcloud")
-            logger.info("nextcloud created")
+            print("nextcloud created")
         order.status = 'done'
         order.save()
     else:
