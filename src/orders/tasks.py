@@ -36,7 +36,7 @@ def create_server_for_order(order_id: int):
     payload = {
         "os_id": 61,
         "configuration": {
-            "configurator_id": 0,
+            "configurator_id": 11,
             "disk": 10240,
             "cpu": 1,
             "ram": 1024
@@ -50,40 +50,54 @@ def create_server_for_order(order_id: int):
         'Authorization': f'Bearer {settings.TIMEWEB_TOKEN}'
     }
     print(server_location)
-    if "Россия".lower() in server_location:
-        payload["configuration"]["configurator_id"] = 11
-    else:
-        payload["configuration"]["configurator_id"] = 11
-        payload["configuration"]["cpu"] = 2
-        payload["configuration"]["ram"] = 2048
-        payload["configuration"]["disk"] = 40960
-
+    location = 'spb-1'
     if "Нидерланды".lower() in server_location:
-        payload["configuration"]["configurator_id"] = 21
+        location = 'ams-1'
     if "Казахстан".lower() in server_location:
-        payload["configuration"]["configurator_id"] = 23
+        location = 'gdn-1'
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200 or response.status_code == 201:
-        logger.error(f'Order #{order.id} is created')
+        logger.info(f'Order #{order.id} is created')
         data = response.json()
         server_id = data['server']['id']
 
         while data['server']['status'] != "on":
+            logger.info('Сервер не запущен')
             time.sleep(10)
             response = requests.get(f'https://api.timeweb.cloud/api/v1/servers/{server_id}', headers=headers)
-            print(response)
-            print(response.text)
+            logger.info(response)
+            logger.info(response.text)
             data = response.json()
 
         root_pass = data['server']['root_pass']
-        ip = ''
-        for network in data['server']['networks']:
-            if network['type'] == 'public':
-                for ip in network['ips']:
-                    if ip['is_main'] and ip['type'] == 'ipv4':
-                        ip = ip['ip']
-                        break
+        # ip = ''
+        # for network in data['server']['networks']:
+        #     if network['type'] == 'public':
+        #         for ip in network['ips']:
+        #             if ip['is_main'] and ip['type'] == 'ipv4':
+        #                 ip = ip['ip']
+        #                 break
+        # Создание ip
+        response = response.post('https://api.timeweb.cloud/api/v1/floating-ips', headers=headers, data=json.dumps({
+            'is_ddos_guard': False,
+            'availability_zone': location
+        }))
+        ip = response.json()['ip']['ip']
+        logger.info(f'Создал ip {ip}')
+        response.post(f'https://api.timeweb.cloud/api/v1/servers/{server_id}/ips', headers=headers,
+                      data=json.dumps({
+                          "type": "ipv4",
+                          "ptr": ip
+                      }))
+        logger.info('Добавил ip')
+        data['server']['status'] = 'sleep'
+        while data['server']['status'] != "on":
+            time.sleep(10)
+            response = requests.get(f'https://api.timeweb.cloud/api/v1/servers/{server_id}', headers=headers)
+            logger.info(response)
+            logger.info3(response.text)
+            data = response.json()
         time.sleep(30)
         work = True
         logger.info(f'Start connect to {ip} with password {root_pass}')
@@ -106,7 +120,7 @@ def create_server_for_order(order_id: int):
                 response = requests.post(f"{outline.api_root}/access-keys/", verify=False)
                 data = response.json()
                 ConfigKey.objects.create(name=data['name'], password=data['password'], order=order, port=data['port'],
-                                        method=data['method'], accessUrl=data['accessUrl'])
+                                         method=data['method'], accessUrl=data['accessUrl'])
         if "files" in order.services:
             vpn.deploy("orders/scripts/install-nextcloud")
             logger.info("nextcloud created")
