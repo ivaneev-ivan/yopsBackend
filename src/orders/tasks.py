@@ -53,7 +53,7 @@ def create_server_for_order(order_id: int):
     location = 'spb-1'
     if "Нидерланды".lower() in server_location:
         location = 'ams-1'
-    if "Казахстан".lower() in server_location:
+    elif "Казахстан".lower() in server_location:
         location = 'gdn-1'
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
@@ -79,13 +79,14 @@ def create_server_for_order(order_id: int):
         #                 ip = ip['ip']
         #                 break
         # Создание ip
-        response = response.post('https://api.timeweb.cloud/api/v1/floating-ips', headers=headers, data=json.dumps({
+        response = requests.post('https://api.timeweb.cloud/api/v1/floating-ips', headers=headers, data=json.dumps({
             'is_ddos_guard': False,
             'availability_zone': location
         }))
-        ip = response.json()['ip']['ip']
+        response_ip = response.json()
+        ip = response_ip['ip']['ip']
         print(f'Создал ip {ip}')
-        response.post(f'https://api.timeweb.cloud/api/v1/servers/{server_id}/ips', headers=headers,
+        requests.post(f'https://api.timeweb.cloud/api/v1/servers/{server_id}/ips', headers=headers,
                       data=json.dumps({
                           "type": "ipv4",
                           "ptr": ip
