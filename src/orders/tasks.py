@@ -65,7 +65,7 @@ def create_server_for_order(order_id: int):
 
     if "Казахстан".lower() in server_location:
         payload["configuration"]["configurator_id"] = 23
-        location = 'gdn-1'
+        location = 'ala-1'
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200 or response.status_code == 201:
@@ -91,11 +91,11 @@ def create_server_for_order(order_id: int):
         ip = response_ip['ip']['ip']
         floating_ip_id = response_ip['ip']['id']
         print(f'Создал ip {ip}')
-        requests.post(f'https://api.timeweb.cloud/api/v1/floating-ips/{floating_ip_id}/bind', headers=headers,
+        print(requests.post(f'https://api.timeweb.cloud/api/v1/floating-ips/{floating_ip_id}/bind', headers=headers,
                       data=json.dumps({
                           "resource_type": "server",
                           "resource_id": server_id
-                      }))
+                      })).json())
         print('Добавил ip')
         data['server']['status'] = 'sleep'
         while data['server']['status'] != "on":
