@@ -33,10 +33,11 @@ def create_server_for_order(order_id: int):
     order = Order.objects.get(pk=order_id)
     server_location = order.location.title.lower()
     url = "https://api.timeweb.cloud/api/v1/servers"
+
     payload = {
         "os_id": 61,
         "configuration": {
-            "configurator_id": 11,
+            "configurator_id": 0,
             "disk": 10240,
             "cpu": 1,
             "ram": 1024
@@ -49,11 +50,21 @@ def create_server_for_order(order_id: int):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {settings.TIMEWEB_TOKEN}'
     }
-    print(server_location)
     location = 'spb-1'
+    if "Россия".lower() in server_location:
+        payload["configuration"]["configurator_id"] = 11
+    else:
+        payload["configuration"]["configurator_id"] = 11
+        payload["configuration"]["cpu"] = 2
+        payload["configuration"]["ram"] = 2048
+        payload["configuration"]["disk"] = 40960
+
     if "Нидерланды".lower() in server_location:
+        payload["configuration"]["configurator_id"] = 21
         location = 'ams-1'
-    elif "Казахстан".lower() in server_location:
+
+    if "Казахстан".lower() in server_location:
+        payload["configuration"]["configurator_id"] = 23
         location = 'gdn-1'
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
@@ -71,13 +82,6 @@ def create_server_for_order(order_id: int):
             data = response.json()
 
         root_pass = data['server']['root_pass']
-        # ip = ''
-        # for network in data['server']['networks']:
-        #     if network['type'] == 'public':
-        #         for ip in network['ips']:
-        #             if ip['is_main'] and ip['type'] == 'ipv4':
-        #                 ip = ip['ip']
-        #                 break
         # Создание ip
         response = requests.post('https://api.timeweb.cloud/api/v1/floating-ips', headers=headers, data=json.dumps({
             'is_ddos_guard': False,
@@ -85,11 +89,12 @@ def create_server_for_order(order_id: int):
         }))
         response_ip = response.json()
         ip = response_ip['ip']['ip']
+        floating_ip_id = response_ip['ip']['id']
         print(f'Создал ip {ip}')
-        requests.post(f'https://api.timeweb.cloud/api/v1/servers/{server_id}/ips', headers=headers,
+        requests.post(f'https://api.timeweb.cloud/api/v1/floating-ips/{floating_ip_id}/bind', headers=headers,
                       data=json.dumps({
-                          "type": "ipv4",
-                          "ptr": ip
+                          "resource_type": "server",
+                          "resource_id": server_id
                       }))
         print('Добавил ip')
         data['server']['status'] = 'sleep'
