@@ -88,6 +88,7 @@ def create_server_for_order(order_id: int):
             'availability_zone': location
         }))
         response_ip = response.json()
+        print(response_ip)
         ip = response_ip['ip']['ip']
         floating_ip_id = response_ip['ip']['id']
         print(f'Создал ip {ip}')
