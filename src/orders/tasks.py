@@ -92,11 +92,11 @@ def create_server_for_order(order_id: int):
         ip = response_ip['ip']['ip']
         floating_ip_id = response_ip['ip']['id']
         print(f'Создал ip {ip}')
-        print(requests.post(f'https://api.timeweb.cloud/api/v1/floating-ips/{floating_ip_id}/bind', headers=headers,
+        requests.post(f'https://api.timeweb.cloud/api/v1/floating-ips/{floating_ip_id}/bind', headers=headers,
                       data=json.dumps({
                           "resource_type": "server",
                           "resource_id": server_id
-                      })).json())
+                      }))
         print('Добавил ip')
         data['server']['status'] = 'sleep'
         while data['server']['status'] != "on":
