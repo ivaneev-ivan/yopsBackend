@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from rest_framework.routers import DefaultRouter
-from orders.views import OrderViewSet, ServerLocationViewSet, get_user_configs_by_id
+from orders.views import OrderViewSet, ServerLocationViewSet, get_user_configs_by_id, get_server_ip
 
 router = DefaultRouter()
 router.register(r'orders', OrderViewSet, basename='orders')
@@ -15,6 +15,7 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('api/', include(router.urls)),
     path('api/user-configs/<int:pk>/', get_user_configs_by_id, name="user-configs-detail"),
+    path('api/orders/ip/<int:pk>/', get_server_ip, name="get-server-ip"),
 ]
 
 if settings.DEBUG:

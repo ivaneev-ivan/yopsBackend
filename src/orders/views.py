@@ -3,7 +3,7 @@ from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Order, ServerLocation, ConfigKey
+from .models import Order, ServerLocation, ConfigKey, OrderOutline
 from .permissions import IsAdminOrReadOnly, IsOwner, IsAdmin
 from .serializers import OrderSerializer, ServerLocationSerializer, ConfigSerializer
 from .auth import CsrfExemptSessionAuthentication
@@ -28,6 +28,7 @@ class ServerLocationViewSet(viewsets.ModelViewSet):
     serializer_class = ServerLocationSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+
 @api_view(['GET'])
 def get_user_configs_by_id(request, pk):
     order = get_object_or_404(Order, pk=pk)
@@ -37,6 +38,17 @@ def get_user_configs_by_id(request, pk):
     user_configs = ConfigKey.objects.filter(order=order)
     user_configs_serializer = ConfigSerializer(user_configs, many=True)
 
-    return Response( user_configs_serializer.data
-    , status=status.HTTP_200_OK)
+    return Response(user_configs_serializer.data
+                    , status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+def get_server_ip(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if order.user.id != request.user.id:
+        return Response({'message': 'error', 'detail': 'You don\'t have permission'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if "file" not in order.services:
+        return Response({"message": 'error', "detail": "Order has not file server"})
+    server = OrderOutline.objects.get(order=order)
+    return Response({"ip": server.apiUrl.split(":8000")[0]})
