@@ -15,7 +15,8 @@ class OrderSerializer(serializers.ModelSerializer):
             user=validated_data['user'],
             location=validated_data['location'],
             count_configs=validated_data['count_configs'],
-            is_own_server=validated_data['is_own_server']
+            is_own_server=validated_data['is_own_server'],
+            services=validated_data['services']
         )
         payment = PaymentModel.objects.create(
             price=order.solar,
